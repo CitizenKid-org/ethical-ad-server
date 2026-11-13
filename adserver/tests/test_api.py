@@ -282,7 +282,10 @@ class AdDecisionApiTests(BaseApiTest):
         resp_json = resp.json()
         self.assertEqual(resp_json["id"], "ad-slug", resp_json)
 
-    @override_settings(CORS_ALLOWED_ORIGINS=["https://www.example.com"])
+    @override_settings(
+        CORS_ALLOW_ALL_ORIGINS=False,
+        CORS_ALLOWED_ORIGINS=["https://www.example.com"],
+    )
     def test_get_cors_headers(self):
         self.publisher.unauthed_ad_decisions = True
         self.publisher.save()
