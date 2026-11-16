@@ -106,6 +106,10 @@ done
 
 clever env set PROCESS_TYPE web              --alias web
 clever env set GUNICORN_WORKERS 2            --alias web
+# Each web deployment applies pending migrations before gunicorn starts. A push
+# to GitHub redeploys web alone, so this keeps the schema in step with the code.
+# Only safe while web boots one instance at a time.
+clever env set RUN_MIGRATIONS true           --alias web
 
 clever env set PROCESS_TYPE worker           --alias worker
 clever env set CELERY_EMBED_BEAT true        --alias worker
@@ -125,15 +129,17 @@ clever scale --alias worker --min-instances 1 --max-instances 1
 #
 # The web application can also be wired to GitHub from the console, in which
 # case pushing to the default branch deploys it and `clever deploy --alias web`
-# is not needed.
+# is not needed. The worker is not redeployed by such a push: run
+# `clever deploy --alias worker` after any change to tasks or models.
 # ---------------------------------------------------------------------------
 
-clever deploy --alias web
+clever deploy --alias web         # applies the migrations, see RUN_MIGRATIONS
 clever deploy --alias worker
 clever deploy --alias migrate     # runs the migrations, then stops
 
-# Re-run the migrations later without a new build:
-#   clever restart --alias migrate
+# `clever restart --alias migrate` re-runs the build last pushed to that Task,
+# not the current code, so it never applies a migration added since. Deploy it
+# again instead, or let the next web deployment apply it.
 
 # ---------------------------------------------------------------------------
 # 7. First-run steps that no environment variable covers

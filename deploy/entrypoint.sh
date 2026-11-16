@@ -99,8 +99,13 @@ download_ip_databases() {
     fi
 }
 
-# Opt-in only. Running migrations from every booting instance races when more
-# than one is starting; prefer a dedicated Clever Task running `migrate`.
+# Opt-in, and enabled on the Clever web application: a push to GitHub redeploys
+# web only, so this is what keeps the schema in step with the code. Clever keeps
+# the previous instance serving until the new one answers on the port, so the
+# schema is migrated before traffic reaches the new code, and a failed
+# migration fails the deployment. Instances booting at once would race each
+# other: keep web at a single instance, or move migrations back to a dedicated
+# step, before scaling it out.
 # Never run makemigrations here: with the analyzer app disabled, Django would
 # generate a bogus migration for the AnalyzedUrl models.
 apply_migrations() {
